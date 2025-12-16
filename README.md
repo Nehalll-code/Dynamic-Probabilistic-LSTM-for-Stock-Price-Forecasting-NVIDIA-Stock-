@@ -1,185 +1,193 @@
-📈 Dynamic Probabilistic LSTM for Stock Price Forecasting (NVIDIA)
+# 📈 Dynamic Probabilistic LSTM for Stock Price Forecasting  
+### *Uncertainty-Aware Multi-Step Forecasting for NVIDIA (NVDA)*
 
-A probabilistic time-series forecasting framework that uses an LSTM network to predict future NVIDIA stock prices along with dynamic confidence intervals.
+> **A quantitative time-series forecasting framework that models not just price direction, but forecast uncertainty — producing dynamic confidence cones instead of brittle point estimates.**
 
-Unlike standard stock prediction projects that output a single deterministic forecast, this project explicitly models forecast uncertainty using empirical residual distributions derived from rolling backtesting.
+---
 
-In real-world finance, understanding risk is as important as predicting price direction.
-This project is built with that philosophy.
+## 🚀 Overview
 
-🔍 Why This Project Exists
+This project implements a **probabilistic deep learning framework** for forecasting NVIDIA stock prices using an LSTM trained on **log returns**, paired with **empirical uncertainty estimation** derived from rolling historical backtests.
 
-Most stock prediction projects try to answer:
+Unlike most stock prediction projects that output a single deterministic price path, this system explicitly answers a more realistic financial question:
 
-“What will the price be?”
+> **“What range of outcomes is plausible, and how uncertain is the forecast?”**
 
-However, practical financial forecasting asks a different question:
+The result is a **time-varying probabilistic forecast** that reflects real model error behavior across different horizons.
 
-“What range of outcomes is plausible, and how uncertain is the forecast?”
+---
 
-This project addresses that gap by:
+## 🎯 Why This Project Exists
 
-Predicting multi-step future returns
+Most retail and academic stock-prediction projects focus on:
 
-Estimating time-varying uncertainty
+> *“What will the price be?”*
 
-Producing a forecast cone instead of a single prediction line
+However, in real quantitative finance, that question is incomplete.
 
-🧠 Core Idea
+Professionals care about:
 
-The model is trained on log returns rather than raw prices and forecasts an entire future horizon in one pass.
-Uncertainty is not assumed — it is learned empirically from historical prediction errors.
+- Forecast **ranges**, not just point estimates  
+- How **uncertainty grows with time**
+- Whether risk estimates are **empirically calibrated**
+- How models behave **out-of-sample**, not just in training
 
-The result is a forecast that answers:
+This project is designed with that philosophy.
 
-What is the most likely future path?
+---
 
-How wide is the uncertainty around it?
+## 🧠 Core Concept
 
-How does that uncertainty grow with time?
+The model predicts **future log returns** over a fixed horizon in a **single forward pass**.
 
-📊 Data Representation
+Uncertainty is **not assumed** (e.g., Gaussian noise).  
+Instead, it is **learned empirically** from historical prediction errors using **rolling backtesting**.
 
-Prices are transformed as follows:
+This enables:
 
-𝑟
-𝑡
-=
-log
-⁡
-(
-𝑃
-𝑡
-)
-−
-log
-⁡
-(
-𝑃
-𝑡
-−
-1
-)
-r
-t
-	​
+- Horizon-specific uncertainty estimation  
+- Volatility-adaptive confidence bands  
+- Realistic probabilistic forecasting
 
-=log(P
-t
-	​
+---
 
-)−log(P
-t−1
-	​
+## 📊 Data Representation
 
-)
+Instead of raw prices, the model operates on **log returns**:
 
-Using log returns:
+\[
+r_t = \log(P_t) - \log(P_{t-1})
+\]
 
-Stabilizes variance
+### Why log returns?
 
-Improves learning dynamics
+- Stabilizes variance  
+- Improves learning dynamics  
+- Allows **additive multi-step forecasting**
+- Converts cleanly back to price space
+- Aligns with standard financial modeling practices
 
-Allows additive multi-step forecasting
+---
 
-Converts cleanly back to price space
-
-🔁 Supervised Time-Series Framing
+## 🔁 Supervised Time-Series Framing
 
 The time series is reframed as a supervised learning problem:
 
-Input: a sliding window of past log returns
+- **Input:** Sliding window of past log returns  
+- **Output:** Vector of future log returns over a fixed horizon  
 
-Output: a sequence of future log returns
+This allows **direct multi-step forecasting**, avoiding the error accumulation inherent in recursive one-step models.
 
-This enables direct multi-step forecasting, avoiding recursive error accumulation.
+---
 
-🤖 Model Summary
+## 🤖 Model Architecture
 
-LSTM-based sequence model
+- LSTM-based sequence model
+- Outputs a **future return vector**, not a single value
+- Optimized using **Mean Squared Error (MSE)**
 
-Predicts future return vectors
+The emphasis is **not** on architectural complexity, but on:
 
-Optimized using Mean Squared Error (MSE)
+- Evaluation methodology  
+- Uncertainty calibration  
+- Financial interpretability  
 
-The focus is intentionally not on complex architectures, but on:
+This mirrors real-world quantitative workflows.
 
-Evaluation methodology
+---
 
-Uncertainty calibration
+## 🧪 Rolling Backtesting Framework
 
-Financial interpretability
+Training loss alone is meaningless in finance.
 
-🧪 Rolling Backtesting
+Instead, this project evaluates the model using **rolling historical backtests**:
 
-Instead of trusting training loss:
+- The model is repeatedly retrained on expanding windows
+- Forecasts are generated for unseen future segments
+- Errors are recorded **per forecast horizon**
 
-The model is evaluated across rolling historical windows
+This produces a **residual matrix** capturing how the model actually performs across time and horizons.
 
-Forecast errors (residuals) are collected for each horizon step
+---
 
-This builds an empirical error distribution over time
+## 📉 Dynamic Uncertainty Estimation
 
-This step is critical for realistic uncertainty estimation.
+For each forecast step:
 
-📉 Dynamic Uncertainty Estimation
+1. Residual distributions are constructed from backtests  
+2. Empirical quantiles (e.g., 90%) are computed  
+3. These define **horizon-specific confidence radii**
 
-For each forecast horizon:
+This approach allows uncertainty to:
 
-Residual distributions are analyzed
+- Increase naturally with forecast horizon  
+- Adapt to changing market volatility  
+- Reflect **real, observed model errors**
 
-Empirical quantiles (e.g., 90%) are computed
+No parametric assumptions.  
+No artificial confidence.
 
-These quantiles define a time-varying confidence radius
+---
 
-This allows uncertainty to:
+## 📈 From Returns Back to Prices
 
-Increase with forecast horizon
+To produce interpretable forecasts:
 
-Adapt to market volatility
+1. Predicted log returns are **cumulatively summed**
+2. Added to the last observed log price
+3. Exponentiated back to price space
 
-Reflect real model performance
+### Final output:
 
-📈 Price-Space Forecasting
+- Point forecast  
+- Upper confidence band  
+- Lower confidence band  
 
-Predicted log returns are:
+This produces a **probabilistic price cone**, not a single fragile prediction line.
 
-Cumulatively summed
+---
 
-Added to the last observed log price
+## ✅ What Makes This Project Strong
 
-Exponentiated back to price space
+- Multi-step sequence forecasting  
+- Empirical, residual-based uncertainty modeling  
+- Rolling backtest evaluation methodology  
+- Financially sound transformations  
+- Clear separation of **prediction vs risk**
 
-Final output:
+This reflects **real quantitative modeling practices**, not toy ML examples.
 
-Point forecast
+---
 
-Upper confidence band
+## ⚠️ Limitations
 
-Lower confidence band
+- Assumes historical dynamics persist  
+- No macroeconomic or news features  
+- Single-asset focus (NVIDIA)
 
-This produces a probabilistic price cone, not a single brittle estimate.
+These trade-offs are **intentional**, prioritizing clarity, interpretability, and methodological rigor.
 
-✅ What Makes This Project Strong
+---
 
-Multi-step sequence forecasting
+## 🔮 Possible Extensions
 
-Residual-based uncertainty modeling
+- Bayesian LSTM or MC Dropout  
+- Regime-aware volatility modeling  
+- Transformer-based time-series models  
+- Multi-asset or portfolio-level uncertainty estimation  
 
-Rolling backtest evaluation
+---
 
-Financially sound transformations
+## 🧾 Disclaimer
 
-Clear separation of prediction vs risk
+This project is for **educational and research purposes only**.  
+It does **not** constitute financial or investment advice.
 
-This reflects real quantitative modeling practices, not toy examples.
+---
 
-⚠️ Limitations
+## ⭐ Final Note
 
-Assumes historical dynamics persist
+This repository is not about predicting the market.
 
-Does not incorporate macroeconomic or news signals
-
-Single-asset forecasting (NVIDIA)
-
-These are deliberate trade-offs for clarity and focus.
+It is about **understanding uncertainty** —  
+and building forecasts that acknowledge it.
